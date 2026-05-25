@@ -6,11 +6,11 @@ from tensorflow.keras.applications.efficientnet import preprocess_input
 from datetime import datetime
 import os
 
-# Шлях до файлу історії
+# Path to history file
 HISTORY_FILE = "history/yoga_history.txt"
 cnn_model = "model/efficientnetb0.keras"
 
-# Завантаження моделі
+# Load model
 model = load_model(
     cnn_model,
     custom_objects={'preprocess_input': preprocess_input}
@@ -39,11 +39,11 @@ def save_to_history(entry):
 def clear_plan():
     return ""
 
-# -------------------- ОБРОБКА КАДРУ --------------------
+# -------------------- FRAME PROCESSING --------------------
 
 def process_frame(frame):
     """
-    Обробка одного кадру відео + класифікація асани
+    Process a single video frame and classify yoga pose
     """
     img = cv2.resize(frame, (224, 224))
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -58,11 +58,11 @@ def process_frame(frame):
 
     return None
 
-# -------------------- ОБРОБКА ВІДЕО --------------------
+# -------------------- VIDEO PROCESSING --------------------
 
 def process_video(video_path):
     """
-    Обробка відео та отримання множини розпізнаних поз
+    Process video and return a set of detected poses
     """
     cap = cv2.VideoCapture(video_path)
     detected_poses = set()
@@ -76,7 +76,7 @@ def process_video(video_path):
 
         frame_counter += 1
 
-        # аналізуємо кожен 5-й кадр
+        # analyze every 5th frame
         if frame_counter % 5 == 0:
             pose = process_frame(frame)
             if pose:
@@ -85,27 +85,27 @@ def process_video(video_path):
     cap.release()
     return detected_poses
 
-# -------------------- ОСНОВНА ФУНКЦІЯ --------------------
+# -------------------- MAIN FUNCTION --------------------
 
 def analyze_video_with_plan(video_path, planned_text, add_to_history, history):
 
     if video_path is None:
-        return "Завантажте відео для аналізу.", history, "\n".join(history) or ""
+        return "Upload a video for analysis.", history, "\n".join(history) or ""
 
-    # 1. отримання тривалості відео
+    # 1. get video duration
     cap = cv2.VideoCapture(video_path)
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = cap.get(cv2.CAP_PROP_FPS)
     total_duration = frame_count / fps if fps > 0 else 0
     cap.release()
 
-    # 2. розпізнавання поз
+    # 2. pose recognition
     detected_poses = process_video(video_path)
 
     if not detected_poses:
-        return "Асани не розпізнано або низька впевненість.", history, "\n".join(history) or ""
+        return "No poses detected or low confidence.", history, "\n".join(history) or ""
 
-    # 3. обробка плану
+    # 3. process training plan
     planned_list = [p.strip() for p in planned_text.split('\n') if p.strip()]
     planned_set = set(planned_list)
 
@@ -113,16 +113,16 @@ def analyze_video_with_plan(video_path, planned_text, add_to_history, history):
     not_executed = planned_set - detected_poses
 
     result = (
-        f"Виконані з плану: {', '.join(sorted(executed)) or ''}\n"
-        f"Не виконані з плану: {', '.join(sorted(not_executed)) or ''}\n"
+        f"Executed from plan: {', '.join(sorted(executed)) or ''}\n"
+        f"Not executed from plan: {', '.join(sorted(not_executed)) or ''}\n"
     )
 
-    # 4. історія
+    # 4. history handling
     if add_to_history:
         date_str = datetime.now().strftime("%Y-%m-%d")
         history_entry = (
-            f"{date_str} | Виконані пози: {', '.join(sorted(executed)) or ''} "
-            f"| Тривалість: {total_duration:.0f} сек"
+            f"{date_str} | Executed poses: {', '.join(sorted(executed)) or ''} "
+            f"| Duration: {total_duration:.0f} sec"
         )
         save_to_history(history_entry)
         history = history + [history_entry]
@@ -140,7 +140,7 @@ with gr.Blocks() as demo:
 
     with gr.Row():
         video_input = gr.Video(
-            label="Завантажити відео",
+            label="Upload video",
             sources=["upload"],
             format="mp4",
             interactive=True,
@@ -150,31 +150,31 @@ with gr.Blocks() as demo:
 
         with gr.Column():
             plan_text = gr.Textbox(
-                label="План тренування",
+                label="Training plan",
                 lines=6,
                 interactive=False
             )
 
             plan_dropdown = gr.Dropdown(
                 choices=class_names,
-                label="Додати позу йоги до плану",
+                label="Add yoga pose to plan",
                 interactive=True
             )
 
-            clear_btn = gr.Button("Очистити")
+            clear_btn = gr.Button("Clear")
             clear_btn.click(fn=clear_plan, outputs=plan_text)
 
     add_to_history_checkbox = gr.Checkbox(
-        label="Додати до історії",
+        label="Add to history",
         value=False
     )
 
-    btn = gr.Button("Аналіз")
+    btn = gr.Button("Analyze")
 
-    output = gr.Textbox(label="Результат", lines=8)
+    output = gr.Textbox(label="Result", lines=8)
 
     history_output = gr.Textbox(
-        label="Історія",
+        label="History",
         value="\n".join(initial_history) or "",
         lines=10,
         interactive=False
