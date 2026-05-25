@@ -1,10 +1,10 @@
 # Yoga Pose Classification System
 
-Інтелектуальна система для розпізнавання та класифікації йога-асан у відеопотоці з використанням згорткової нейронної мережі 
+An intelligent system for recognizing and classifying yoga asanas in a video stream using a convolutional neural network.
 
-## Функціонал
-- Завантаження відео
-- Аналіз відеопотоку
-- Класифікація йога-асан
-- Порівняння з планом тренування
-- Збереження історії тренувань
+## Functionality
+- Video upload
+- Video stream analysis
+- Yoga pose classification
+- Comparison with a training plan
+- Saving training history
