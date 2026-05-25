@@ -1,6 +1,6 @@
 # Yoga Pose Classification System
 
-An intelligent system for recognizing and classifying yoga asanas in a video stream using a convolutional neural network.
+System for recognizing and classifying yoga asanas in a video stream using a convolutional neural network.
 
 ## Functionality
 - Video upload
